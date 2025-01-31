@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 
 # ตั้งชื่อแอป
+st.title("PlasmaX")
 st.title("Plasma Bag Color Classification")
 st.write("อัปโหลดภาพถุงน้ำเหลืองเพื่อตรวจสอบสี (Acceptable/Unacceptable)")
 
