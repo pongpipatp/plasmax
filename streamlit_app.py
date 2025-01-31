@@ -2,7 +2,6 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
 # ตั้งชื่อแอป
 st.title("Plasma Bag Color Classification")
@@ -42,30 +41,20 @@ def classify_plasma_color(image):
 
     return classification, result_image
 
-# คลาสสำหรับ WebRTC
-class VideoProcessor(VideoTransformerBase):
-    def __init__(self):
-        self.result_image = None
-        self.classification = None
+# ส่วนสำหรับการถ่ายภาพจากกล้อง
+image = st.camera_input("ถ่ายภาพถุงน้ำเหลือง")
 
-    def recv(self, frame):
-        # รับภาพจากกล้อง
-        img = frame.to_ndarray(format="bgr24")
-        
-        # แปลงภาพเป็น RGB และใช้ฟังก์ชัน classify_plasma_color
-        image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(image_rgb)
-        self.classification, self.result_image = classify_plasma_color(pil_image)
-        
-        # คืนผลลัพธ์เป็นภาพ BGR
-        return av.VideoFrame.from_ndarray(self.result_image, format="bgr24")
-
-# ส่วนสำหรับเปิดใช้งานกล้อง
-ctx = webrtc_streamer(key="example", video_processor_factory=VideoProcessor)
-
-# แสดงผลลัพธ์จากกล้อง
-if ctx.video_processor:
+if image is not None:
+    # แปลงภาพที่ถ่ายจากกล้องเป็นรูปภาพที่ใช้ได้
+    pil_image = Image.open(image)
+    
+    # ใช้ฟังก์ชัน classify_plasma_color เพื่อทำการตรวจสอบสี
+    classification, result_image = classify_plasma_color(pil_image)
+    
+    # แสดงผลลัพธ์
     st.write("**ผลลัพธ์:**")
-    st.write(f"สถานะ: {ctx.video_processor.classification}")
-    if ctx.video_processor.result_image is not None:
-        st.image(ctx.video_processor.result_image, caption="ผลลัพธ์การตรวจสอบสี", use_column_width=True)
+    st.write(f"สถานะ: {classification}")
+    
+    # แสดงภาพผลลัพธ์
+    result_pil_image = Image.fromarray(cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
+    st.image(result_pil_image, caption="ผลลัพธ์การตรวจสอบสี", use_column_width=True)
