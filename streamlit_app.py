@@ -2,10 +2,11 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
 # ตั้งชื่อแอป
 st.title("Plasma Bag Color Classification")
-st.write("อัปโหลดภาพถุงน้ำเหลืองเพื่อตรวจสอบสี (Acceptable/Unacceptable)")
+st.write("ถ่ายภาพถุงน้ำเหลืองเพื่อตรวจสอบสี (Acceptable/Unacceptable)")
 
 # ฟังก์ชันสำหรับการตรวจสอบสี
 def classify_plasma_color(image):
@@ -41,20 +42,30 @@ def classify_plasma_color(image):
 
     return classification, result_image
 
-# ส่วนสำหรับอัปโหลดไฟล์ภาพ
-uploaded_file = st.file_uploader("เลือกไฟล์ภาพ", type=["jpg", "jpeg", "png"])
+# คลาสสำหรับ WebRTC
+class VideoProcessor(VideoTransformerBase):
+    def __init__(self):
+        self.result_image = None
+        self.classification = None
 
-if uploaded_file is not None:
-    # อ่านไฟล์ภาพ
-    image = Image.open(uploaded_file)
-    st.image(image, caption="ภาพที่อัปโหลด", use_column_width=True)
+    def recv(self, frame):
+        # รับภาพจากกล้อง
+        img = frame.to_ndarray(format="bgr24")
+        
+        # แปลงภาพเป็น RGB และใช้ฟังก์ชัน classify_plasma_color
+        image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        pil_image = Image.fromarray(image_rgb)
+        self.classification, self.result_image = classify_plasma_color(pil_image)
+        
+        # คืนผลลัพธ์เป็นภาพ BGR
+        return av.VideoFrame.from_ndarray(self.result_image, format="bgr24")
 
-    # เรียกฟังก์ชันตรวจสอบสี
-    classification, result_image = classify_plasma_color(image)
+# ส่วนสำหรับเปิดใช้งานกล้อง
+ctx = webrtc_streamer(key="example", video_processor_factory=VideoProcessor)
 
-    # แปลงภาพผลลัพธ์กลับเป็น RGB เพื่อแสดงผล
-    result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
-
-    # แสดงผลลัพธ์
-    st.subheader(f"ผลลัพธ์: {classification}")
-    st.image(result_image_rgb, caption="ผลลัพธ์หลังการตรวจสอบ", use_column_width=True)
+# แสดงผลลัพธ์จากกล้อง
+if ctx.video_processor:
+    st.write("**ผลลัพธ์:**")
+    st.write(f"สถานะ: {ctx.video_processor.classification}")
+    if ctx.video_processor.result_image is not None:
+        st.image(ctx.video_processor.result_image, caption="ผลลัพธ์การตรวจสอบสี", use_column_width=True)
