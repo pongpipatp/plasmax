@@ -57,4 +57,4 @@ if image is not None:
     
     # แสดงภาพผลลัพธ์
     result_pil_image = Image.fromarray(cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
-    st.image(result_pil_image, caption="ผลลัพธ์การตรวจสอบสี", use_column_width=True)
+    st.image(result_pil_image, caption="ผลลัพธ์การตรวจสอบสี", use_container_width=True)
