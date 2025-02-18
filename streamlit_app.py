@@ -19,8 +19,8 @@ def classify_plasma_color(image):
     hsv_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
 
     # กำหนดขอบเขตของสี Acceptable (ตัวอย่างสีเหลือง)
-    lower_bound = np.array([23, 36, 30])  # ค่าต่ำสุดของสี
-    upper_bound = np.array([63, 81, 63])  # ค่าสูงสุดของสี
+    lower_bound = np.array([20, 100, 100])  # ค่าต่ำสุดของสี
+    upper_bound = np.array([40, 255, 255])  # ค่าสูงสุดของสี
 
     # สร้าง Mask สำหรับพื้นที่ที่อยู่ในขอบเขตสี
     mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
